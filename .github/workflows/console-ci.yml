@@ -1,0 +1,108 @@
+# Build + release Winlator Ludashi Console (0.1.x beta)
+name: Console CI
+
+on:
+  push:
+    branches: [ "main", "ludashi-3.1", "console-0.1.0-beta" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "main", "ludashi-3.1", "console-0.1.0-beta" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: console-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Clone libadrenotools
+        run: |
+          rm -rf app/src/main/cpp/adrenotools
+          git clone https://github.com/Pipetto-crypto/libadrenotools.git \
+            app/src/main/cpp/adrenotools
+          cd app/src/main/cpp/adrenotools
+          git checkout 8483dfdaa2abf97ee89ad0e5f337e7b508550c6b
+
+      - name: Clone linkernsbypass
+        run: |
+          mkdir -p app/src/main/cpp/adrenotools/lib
+          git clone https://github.com/Pipetto-crypto/liblinkernsbypass.git \
+            app/src/main/cpp/adrenotools/lib/linkernsbypass
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: gradle
+
+      - name: Install shader compiler
+        run: sudo apt-get update && sudo apt-get install -y glslang-tools
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Assemble debug APK
+        run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
+
+      - name: Stage APK for upload
+        run: |
+          mkdir -p dist
+          VERSION="${GITHUB_REF_NAME}"
+          if [[ "$GITHUB_REF" != refs/tags/* ]]; then
+            VERSION="0.1.0-beta-${GITHUB_SHA::7}"
+          fi
+          cp app/build/outputs/apk/debug/app-debug.apk \
+            "dist/Winlator-Ludashi-Console-${VERSION}-arm64-debug.apk"
+          ls -lh dist/
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Winlator-Ludashi-Console-APK
+          path: dist/*.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish GitHub Release (tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Winlator Ludashi Console ${{ github.ref_name }}
+          draft: false
+          prerelease: true
+          generate_release_notes: true
+          body: |
+            ## Winlator Ludashi Console ${{ github.ref_name }}
+
+            Switch-inspired Console UI beta on the Ludashi / Bionic Winlator stack.
+
+            ### Credits
+            - **BrunoSX** — original Winlator
+            - **Pipetto-crypto** — Winlator Bionic
+            - **StevenMXZ (Steven)** — Winlator-Ludashi
+            - Wine · Box64 · FEX-Emu · Mesa · DXVK · VKD3D · community
+
+            See [CREDITS.md](../blob/${{ github.ref_name }}/CREDITS.md) and [NOTICE](../blob/${{ github.ref_name }}/NOTICE).
+
+            ### Install
+            1. Download the `*-arm64-debug.apk` asset below
+            2. Install on an arm64-v8a Android device
+            3. Allow first-run ImageFS / container setup to finish
+
+            **Status:** pre-release / beta — expect bugs.
+          files: |
+            dist/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

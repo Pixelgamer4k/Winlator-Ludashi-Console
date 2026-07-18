@@ -1,0 +1,78 @@
+NOTICE
+======
+
+Winlator Ludashi Console 0.1.0-beta
+----------------------------------
+
+This product includes software developed by many upstream authors.
+Redistribution must preserve applicable copyright and license notices.
+
+1. Winlator (original)
+   Copyright (c) BrunoSX (brunodev85)
+   License: MIT
+   https://github.com/brunodev85/winlator
+
+2. Winlator Bionic
+   Copyright (c) Pipetto-crypto and contributors
+   https://github.com/Pipetto-crypto/winlator
+
+3. Winlator-Ludashi
+   Copyright (c) StevenMXZ (Steven) and contributors
+   https://github.com/StevenMXZ/Winlator-Ludashi
+
+4. Wine
+   Copyright (c) Wine authors
+   https://www.winehq.org/
+   License: LGPL
+
+5. Box86 / Box64
+   Copyright (c) ptitSeb and contributors
+   https://github.com/ptitSeb
+   License: MIT
+
+6. FEX-Emu
+   Copyright (c) FEX-Emu authors
+   https://github.com/FEX-Emu/FEX
+   License: MIT
+
+7. Mesa 3D
+   Copyright (c) Mesa contributors
+   https://www.mesa3d.org/
+   License: MIT / other (see Mesa)
+
+8. DXVK
+   Copyright (c) doitsujin and contributors
+   https://github.com/doitsujin/dxvk
+   License: zlib / libpng style
+
+9. VKD3D / Wine vkd3d
+   Copyright (c) Wine authors
+   License: LGPL
+
+10. PRoot
+    https://proot-me.github.io
+    License: GPL-2.0-or-later (see bundled COPYING)
+
+11. AdrenoTools / libadrenotools / linkernsbypass
+    Various authors (Pipetto-crypto, K11MCH1, and others)
+    See component LICENSE files under app/src/main/cpp/
+
+12. OpenXR-SDK
+    Copyright (c) Khronos Group
+    See app/src/main/cpp/OpenXR-SDK/LICENSE and LICENSES/
+
+13. Google Fonts (Nunito) via Play Services Fonts provider
+    Fonts subject to their respective OFL / Google Fonts terms
+    Certificates: app/src/main/res/values/font_certs.xml (Apache-2.0 sample)
+
+14. Jetpack Compose / AndroidX
+    Copyright (c) The Android Open Source Project
+    License: Apache-2.0
+
+15. MidiSynth (bundled)
+    See app/libs/MidiSynth/LICENSE.txt
+
+Large runtime assets (ImageFS, Proton tarballs) may be downloaded at build time
+and are not a substitute for reading each project's license before redistribution.
+
+For a human-readable thank-you list, see CREDITS.md.

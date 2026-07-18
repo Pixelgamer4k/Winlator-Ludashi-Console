@@ -1,0 +1,18 @@
+# Keep legacy upstream CI filename but point at Console workflow docs.
+# Prefer console-ci.yml for builds and tagged releases.
+name: Android CI (legacy trigger)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  redirect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notice
+        run: |
+          echo "Use the Console CI workflow (.github/workflows/console-ci.yml)."
+          echo "It builds the APK and publishes releases on v* tags."

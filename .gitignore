@@ -1,0 +1,20 @@
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build/
+/app/build/
+/captures/
+.externalNativeBuild/
+.cxx/
+.kotlin/
+*.apk
+*.ap_
+*.dex
+
+# Large assets fetched by Gradle preBuild — do not commit
+app/src/main/assets/imagefs.tar.zst
+app/src/main/assets/imagefs.tar.zst.*
+app/src/main/assets/proton-9.0-arm64ec.tar.zst
+app/src/main/assets/proton-9.0-arm64ec.tar.zst.*

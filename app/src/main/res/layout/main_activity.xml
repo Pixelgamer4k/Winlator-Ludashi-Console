@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/DrawerLayout"
+    android:fitsSystemWindows="false"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F2F2F7">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <FrameLayout
+            android:id="@+id/FLFragmentContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#F2F2F7" />
+
+        <androidx.appcompat.widget.Toolbar
+            android:layout_width="match_parent"
+            android:layout_height="?actionBarSize"
+            android:id="@+id/Toolbar"
+            android:visibility="gone"
+            android:background="#000000"
+            android:layout_gravity="top"
+            app:title="@string/app_name"
+            app:titleTextColor="#ffffff"
+            app:titleTextAppearance="@style/TextAppearance.AppCompat.Medium" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="320dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:orientation="vertical"
+        android:background="#F2F2F7"
+        android:fitsSystemWindows="true">
+
+        <com.google.android.material.navigation.NavigationView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:id="@+id/NavigationView"
+            android:fitsSystemWindows="false"
+            android:background="#F2F2F7"
+            app:itemIconTint="#007AFF"
+            app:itemTextColor="#1C1C1E"
+            app:itemBackground="@drawable/ui_nav_item_bg"
+            app:itemHorizontalPadding="20dp"
+            app:itemIconPadding="18dp"
+            app:menu="@menu/main_menu" />
+
+        <include layout="@layout/main_menu_storage_footer" />
+    </LinearLayout>
+</androidx.drawerlayout.widget.DrawerLayout>

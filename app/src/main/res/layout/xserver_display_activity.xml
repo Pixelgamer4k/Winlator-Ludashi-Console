@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/DrawerLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#5A5A64">
+
+    <!-- Content: column + floating EDIT at absolute screen top-right -->
+    <!-- Shell chrome is light grey; display + dark-grey pad with white borders -->
+    <FrameLayout
+        android:id="@+id/DeltaContentRoot"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#5A5A64">
+
+        <!-- Heights set in code: camera gap + hard 4:3 game frame + chassis -->
+        <LinearLayout
+            android:id="@+id/DeltaRootColumn"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:background="#5A5A64">
+
+            <!-- Holds the 4:3 screen + edit tools panel (when open) -->
+            <FrameLayout
+                android:id="@+id/GameSlot"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#5A5A64">
+
+                <!-- Outer bezel (rounded border) — sized in code to exact 4:3 -->
+                <FrameLayout
+                    android:id="@+id/GameBezel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:background="@drawable/delta_game_screen_frame"
+                    android:padding="3dp"
+                    android:clipToOutline="true">
+
+                    <!-- Inner game surface fills bezel completely (stays black) -->
+                    <FrameLayout
+                        android:id="@+id/FLXServerDisplay"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="#000000"
+                        android:clipToOutline="true" />
+                </FrameLayout>
+
+                <!-- Edit tools panel only (EDIT/DONE button is screen top-right) -->
+                <androidx.compose.ui.platform.ComposeView
+                    android:id="@+id/DeltaEditOverlay"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top|center_horizontal"
+                    android:padding="8dp"
+                    android:elevation="8dp" />
+            </FrameLayout>
+
+            <androidx.compose.ui.platform.ComposeView
+                android:id="@+id/DeltaChassis"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:background="#5A5A64" />
+        </LinearLayout>
+
+        <!-- Absolute top-right of the phone screen (above display + pad) -->
+        <androidx.compose.ui.platform.ComposeView
+            android:id="@+id/DeltaEditButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="2dp"
+            android:layout_marginEnd="6dp"
+            android:elevation="24dp" />
+    </FrameLayout>
+
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/SessionMenuCompose"
+        android:layout_width="340dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="#FFF2F2F7"
+        android:clickable="true"
+        android:focusable="true" />
+
+    <EditText
+        android:id="@+id/XRTextInput"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:inputType="textMultiLine"
+        android:autofillHints="no"
+        tools:ignore="LabelFor"
+        android:visibility="gone" />
+
+</androidx.drawerlayout.widget.DrawerLayout>
