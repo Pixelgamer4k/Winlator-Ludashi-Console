@@ -5,7 +5,8 @@
 <h1 align="center">Winlator Ludashi Console</h1>
 
 <p align="center">
-  <strong>0.1.0-beta</strong> — a Switch-inspired Console UI on the Ludashi / Bionic Winlator stack
+  <strong>0.1.0-beta</strong> — a retro handheld Console for Windows games on Android<br>
+  <em>Game Boy–class ritual · library shelf · performance AI</em>
 </p>
 
 <p align="center">
@@ -20,16 +21,29 @@
 
 ## What is this?
 
-**Winlator** lets you run Windows (x86 / x86_64) apps and games on Android via Wine, Box64 / FEXCore, and a containerized rootfs.
+**Winlator Ludashi Console** is built for a **retro gaming experience** — the same kind of focused, handheld ritual people loved on the **Game Boy**: pick a title from your shelf, open it, play. Soft system chrome, a clear library home, and motion that feels like a pocket console — not a desktop settings dump.
 
-This repository ships a **Console 0.1.0-beta** experience on top of **[StevenMXZ’s Winlator-Ludashi](https://github.com/StevenMXZ/Winlator-Ludashi)** (itself descended from **Pipetto-crypto’s Winlator Bionic** and **BrunoSX’s original Winlator**):
+Under the hood it still runs Windows (x86 / x86_64) games on Android via Wine, Box64 / FEXCore, and a containerized rootfs, on top of **[StevenMXZ’s Winlator-Ludashi](https://github.com/StevenMXZ/Winlator-Ludashi)** (descended from **Pipetto-crypto’s Winlator Bionic** and **BrunoSX’s original Winlator**).
 
-- Game library home with soft system chrome  
+### Console surface
+
+- Game library home — shelf-first, Game Boy–era “pick up and play” flow  
 - System side panel (Library, Containers, Files, Control panel, Settings, About)  
 - Modern container create / edit (General · Environment · Advanced · Components)  
 - Edge gestures, tab pager, sheet dismiss — finger-follow motion  
-- Optional Hive Agent (OpenAI-compatible / OpenRouter) helpers  
+- **Hive Agent** — trained performance AI (see below)  
 - Delta chassis / on-screen control editing  
+
+### Hive Agent — real performance AI
+
+The in-app **Hive Agent** is not a toy chatbot bolted on for marketing. It is a **fully instructed, tool-using agent** trained on the Winlator / Box64 / FEX / DXVK / Turnip stack so it can **accurately and aggressively optimize and improve game performance** on your device:
+
+- Reads device context, container state, and session logs  
+- Researches known-good presets for specific titles  
+- Applies real changes: Box64 / FEX presets, DXVK / VKD3D, env vars, drivers, contents packs, per-game overrides  
+- Fixes crashes and misconfig with the same toolchain — then tells you what changed  
+
+Configure API URL, key, and model under **Settings**, then use the AI button on the Console. Ask it to optimize a game; it will **mutate settings that matter**, not hand-wave.
 
 > **Beta:** expect rough edges. Please file issues with device model, Android version, and logs.
 
@@ -91,12 +105,12 @@ Requirements: JDK **17**, Android SDK / NDK as in `app/build.gradle`, `glslang` 
 
 | Area | Behavior |
 |------|----------|
-| Library | Shelf of games, long-press options, System hint / edge swipe |
+| Library | Retro shelf — Game Boy–style pick-and-play home |
 | System menu | Containers, Files, Control panel, Settings, About |
 | Gestures | Edge open / back, drawer drag, editor tab swipe, sheet pull-down |
 | Containers | List + full editor tabs with continuous scroll |
 | Session | In-game Console session menus (where enabled) |
-| AI | Optional Hive Agent FAB (configure under Settings) |
+| Hive Agent | Trained performance AI — optimizes Box64/FEX/DXVK/drivers for real FPS and stability gains |
 
 ---
 
