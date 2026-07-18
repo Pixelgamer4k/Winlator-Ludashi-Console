@@ -6,7 +6,7 @@ labels: [bug, beta]
 
 **Device / Android**
 
-**APK version** (e.g. 0.1.0-beta)
+**APK version** (e.g. 0.1.1-beta)
 
 **What happened**
 

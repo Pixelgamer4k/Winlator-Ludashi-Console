@@ -61,7 +61,7 @@ jobs:
           mkdir -p dist
           VERSION="${GITHUB_REF_NAME}"
           if [[ "$GITHUB_REF" != refs/tags/* ]]; then
-            VERSION="0.1.0-beta-${GITHUB_SHA::7}"
+            VERSION="0.1.1-beta-${GITHUB_SHA::7}"
           fi
           cp app/build/outputs/apk/debug/app-debug.apk \
             "dist/Winlator-Ludashi-Console-${VERSION}-arm64-debug.apk"
@@ -86,7 +86,8 @@ jobs:
           body: |
             ## Winlator Ludashi Console ${{ github.ref_name }}
 
-            Switch-inspired Console UI beta on the Ludashi / Bionic Winlator stack.
+            Retro handheld Console UI beta on the Ludashi / Bionic Winlator stack.
+            Includes left D-pad, corrected LB/LT · RB/RT mapping, and Hive Agent performance AI.
 
             ### Credits
             - **BrunoSX** — original Winlator

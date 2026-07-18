@@ -20,4 +20,4 @@ Read [CREDITS.md](CREDITS.md) and [NOTICE](NOTICE).
 
 ## Reporting bugs
 
-Include device model, Android version, APK version (`0.1.0-beta`), and relevant logcat / Wine logs.
+Include device model, Android version, APK version (`0.1.1-beta`), and relevant logcat / Wine logs.

@@ -51,7 +51,7 @@ Additional shout-outs: **alexvorxx** (mods / tips), and everyone who filed issue
 
 ---
 
-## This Console 0.1.0-beta layer
+## This Console 0.1.1-beta layer
 
 The **Console** layer in this tree — retro handheld / Game Boy–class library experience, System menu, container editor, gestures, and the **Hive Agent** performance AI — is additive UX on top of Steven’s Ludashi / Bionic base. It does **not** replace credit for the upstream authors above.
 

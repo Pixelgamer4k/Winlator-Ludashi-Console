@@ -5,7 +5,7 @@
 <h1 align="center">Winlator Ludashi Console</h1>
 
 <p align="center">
-  <strong>0.1.0-beta</strong> — a retro handheld Console for Windows games on Android<br>
+  <strong>0.1.1-beta</strong> — a retro handheld Console for Windows games on Android<br>
   <em>Game Boy–class ritual · library shelf · performance AI</em>
 </p>
 
@@ -14,7 +14,7 @@
   <a href="LICENSE"><img alt="License MIT" src="https://img.shields.io/badge/license-MIT-brightgreen?style=for-the-badge"></a>
   <a href="CREDITS.md"><img alt="Credits" src="https://img.shields.io/badge/credits-BrunoSX%20·%20Steven%20·%20community-8E8E93?style=for-the-badge"></a>
   <img alt="Platform" src="https://img.shields.io/badge/Android-arm64--v8a-3DDC84?style=for-the-badge&logo=android&logoColor=white">
-  <img alt="Status" src="https://img.shields.io/badge/status-0.1.0%20beta-orange?style=for-the-badge">
+  <img alt="Status" src="https://img.shields.io/badge/status-0.1.1%20beta-orange?style=for-the-badge">
 </p>
 
 ---
@@ -65,7 +65,7 @@ This beta does **not** claim ownership of upstream Winlator. It is a derivative 
 
 ## Install (beta)
 
-1. Open **[Releases](../../releases)** and download the latest **`0.1.0-beta`** CI APK (`*-debug.apk` or release asset name from the workflow).  
+1. Open **[Releases](../../releases)** and download the latest **`0.1.1-beta`** CI APK (`*-debug.apk` or release asset name from the workflow).  
 2. Install on an **arm64-v8a** Android device (min SDK 26; target SDK 28 as upstream).  
 3. First launch may unpack ImageFS / container assets — wait for setup to finish.  
 4. Add a game from the library (**+**) or System → Files, then play from the shelf.
@@ -121,13 +121,13 @@ GitHub Actions workflow **`.github/workflows/release.yml`**:
 - Builds `assembleDebug` on Ubuntu with JDK 17  
 - Clones Adreno native deps like upstream  
 - Uploads the APK as a workflow artifact  
-- On version tags (`v0.1.0-beta`, etc.), publishes a **GitHub Release** with the APK attached  
+- On version tags (`v0.1.1-beta`, etc.), publishes a **GitHub Release** with the APK attached  
 
 Push a tag to cut a release:
 
 ```bash
-git tag -a v0.1.0-beta -m "Winlator Ludashi Console 0.1.0-beta"
-git push origin v0.1.0-beta
+git tag -a v0.1.1-beta -m "Winlator Ludashi Console 0.1.1-beta"
+git push origin v0.1.1-beta
 ```
 
 ---

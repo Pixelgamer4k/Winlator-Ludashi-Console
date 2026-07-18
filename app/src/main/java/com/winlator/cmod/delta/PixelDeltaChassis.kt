@@ -15,6 +15,7 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -49,9 +50,12 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.changedToDown
@@ -73,6 +77,7 @@ import com.winlator.cmod.inputcontrols.ExternalController
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.hypot
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 private val LocalChassisHaptics = staticCompositionLocalOf<ChassisHaptics?> { null }
@@ -101,7 +106,7 @@ private enum class ControlKind {
     GUIDE, BACK, SHARE,
     FACE_A, FACE_B, FACE_X, FACE_Y,
     FN1, FN2, FN3, SLIDER,
-    STICK, TRACKPAD_RS,
+    STICK, DPAD, TRACKPAD_RS,
     KEY,
 }
 
@@ -119,12 +124,11 @@ private val EditHaloBlueSel = Color(0xFF60A5FA)
  * visible; layout matches the clean Xbox-style portrait chassis.
  */
 private fun defaultControls(): List<ControlDef> = listOf(
-    // Shoulders — inset from top/sides so RoundedCornerShape does not clip them
-    // Labels: LT/RT (was L1/R1), LB/RB (was L2/R2)
-    ControlDef("l1", ControlKind.L1, Offset(0.04f, 0.055f), "LT"),
-    ControlDef("l2", ControlKind.L2, Offset(0.20f, 0.195f), "LB"),
-    ControlDef("r2", ControlKind.R2, Offset(0.58f, 0.105f), "RB"),
-    ControlDef("r1", ControlKind.R1, Offset(0.76f, 0.055f), "RT"),
+    // Shoulders — bumpers (LB/RB) on top, triggers (LT/RT) below
+    ControlDef("l1", ControlKind.L1, Offset(0.04f, 0.055f), "LB"),
+    ControlDef("l2", ControlKind.L2, Offset(0.20f, 0.195f), "LT"),
+    ControlDef("r2", ControlKind.R2, Offset(0.58f, 0.105f), "RT"),
+    ControlDef("r1", ControlKind.R1, Offset(0.76f, 0.055f), "RB"),
     // Back arrow + Start (hamburger) — top center
     ControlDef("back", ControlKind.BACK, Offset(0.36f, 0.070f), "BACK"),
     ControlDef("xbox", ControlKind.GUIDE, Offset(0.48f, 0.065f), "START"),
@@ -133,12 +137,14 @@ private fun defaultControls(): List<ControlDef> = listOf(
     ControlDef("x", ControlKind.FACE_X, Offset(0.58f, 0.360f), "X", Color(0xFF6FA8DC)),
     ControlDef("b", ControlKind.FACE_B, Offset(0.82f, 0.360f), "B", Color(0xFFD9534F)),
     ControlDef("a", ControlKind.FACE_A, Offset(0.70f, 0.470f), "A", Color(0xFF7BC96F)),
-    // Stick + LS/RS click near stick
-    ControlDef("joystick", ControlKind.STICK, Offset(0.05f, 0.560f)),
-    ControlDef("ls", ControlKind.FN1, Offset(0.22f, 0.500f), "LS"),
-    ControlDef("rs", ControlKind.FN2, Offset(0.30f, 0.610f), "RS"),
+    // Left D-pad — spaced above the stick to avoid cross-taps
+    ControlDef("dpad", ControlKind.DPAD, Offset(0.055f, 0.250f), "D-PAD"),
+    // Stick lower-left — clear vertical gap from D-pad
+    ControlDef("joystick", ControlKind.STICK, Offset(0.07f, 0.700f)),
+    ControlDef("ls", ControlKind.FN1, Offset(0.36f, 0.520f), "LS"),
+    ControlDef("rs", ControlKind.FN2, Offset(0.44f, 0.720f), "RS"),
     // RS pad
-    ControlDef("trackpad_rs", ControlKind.TRACKPAD_RS, Offset(0.48f, 0.580f)),
+    ControlDef("trackpad_rs", ControlKind.TRACKPAD_RS, Offset(0.52f, 0.600f)),
 )
 
 private fun keyCatalog(): List<ControlDef> {
@@ -195,6 +201,24 @@ fun PixelDeltaChassis(modifier: Modifier = Modifier) {
             listOf("a", "b", "x", "y").forEach { dragOffsets.remove(it) }
             prefs.edit().putBoolean("face_separate_v12", true).apply()
         }
+        // v13: ensure left D-pad is present/enabled for existing layouts
+        val isFreshDpad = !prefs.getBoolean("dpad_added_v13", false)
+        if (isFreshDpad) {
+            enabledIds["dpad"] = true
+            dragOffsets.remove("dpad")
+            sizeScales["dpad"] = 1f
+            prefs.edit().putBoolean("dpad_added_v13", true).apply()
+        }
+        // v14: modern D-pad + clearer left-side separation (reset related offsets)
+        val isFreshDpadLayout = !prefs.getBoolean("dpad_layout_v14", false)
+        if (isFreshDpadLayout) {
+            listOf("dpad", "joystick", "ls", "rs").forEach {
+                dragOffsets.remove(it)
+                sizeScales[it] = 1f
+            }
+            enabledIds["dpad"] = true
+            prefs.edit().putBoolean("dpad_layout_v14", true).apply()
+        }
         val isFreshDefault = !prefs.getBoolean("defaults_applied_v10", false)
         if (isFreshDefault) {
             dragOffsets.clear()
@@ -205,6 +229,8 @@ fun PixelDeltaChassis(modifier: Modifier = Modifier) {
             prefs.edit()
                 .putBoolean("defaults_applied_v10", true)
                 .putBoolean("face_separate_v12", true)
+                .putBoolean("dpad_added_v13", true)
+                .putBoolean("dpad_layout_v14", true)
                 .apply()
         }
         defaultControls().forEach { def ->
@@ -214,7 +240,7 @@ fun PixelDeltaChassis(modifier: Modifier = Modifier) {
                 if (!wScales.containsKey(def.id)) wScales[def.id] = 1f
                 if (!hScales.containsKey(def.id)) hScales[def.id] = 1f
             }
-            if (isFreshDefault || isFreshSeparate || !prefs.contains("off_${def.id}")) {
+            if (isFreshDefault || isFreshSeparate || isFreshDpad || isFreshDpadLayout || !prefs.contains("off_${def.id}")) {
                 dragOffsets.remove(def.id)
             }
         }
@@ -255,6 +281,7 @@ fun PixelDeltaChassis(modifier: Modifier = Modifier) {
         onDispose {
             persist()
             ChassisInputBridge.get().setStick(0f, 0f, 0f, 0f)
+            ChassisInputBridge.get().setDpad(false, false, false, false)
         }
     }
 
@@ -572,21 +599,21 @@ private fun UnifiedDeck(
                     } else null
                 ) {
                     when (def.kind) {
-                        ControlKind.L1 -> Shoulder("l1", "LT", padW * 0.168f * wSc, padH * 0.072f * hSc) {
+                        ControlKind.L1 -> Shoulder("l1", "LB", padW * 0.168f * wSc, padH * 0.072f * hSc) {
                             ChassisInputBridge.get().setButton(ExternalController.IDX_BUTTON_L1, it)
-                            if (it) onAction("LT")
-                        }
-                        ControlKind.L2 -> Shoulder("l2", "LB", padW * 0.168f * wSc, padH * 0.072f * hSc) {
-                            ChassisInputBridge.get().setTrigger(it, null)
                             if (it) onAction("LB")
                         }
-                        ControlKind.R1 -> Shoulder("r1", "RT", padW * 0.168f * wSc, padH * 0.072f * hSc) {
-                            ChassisInputBridge.get().setButton(ExternalController.IDX_BUTTON_R1, it)
-                            if (it) onAction("RT")
+                        ControlKind.L2 -> Shoulder("l2", "LT", padW * 0.168f * wSc, padH * 0.072f * hSc) {
+                            ChassisInputBridge.get().setTrigger(it, null)
+                            if (it) onAction("LT")
                         }
-                        ControlKind.R2 -> Shoulder("r2", "RB", padW * 0.168f * wSc, padH * 0.072f * hSc) {
-                            ChassisInputBridge.get().setTrigger(null, it)
+                        ControlKind.R1 -> Shoulder("r1", "RB", padW * 0.168f * wSc, padH * 0.072f * hSc) {
+                            ChassisInputBridge.get().setButton(ExternalController.IDX_BUTTON_R1, it)
                             if (it) onAction("RB")
+                        }
+                        ControlKind.R2 -> Shoulder("r2", "RT", padW * 0.168f * wSc, padH * 0.072f * hSc) {
+                            ChassisInputBridge.get().setTrigger(null, it)
+                            if (it) onAction("RT")
                         }
                         ControlKind.GUIDE -> HoldCircle(
                             id = "xbox",
@@ -642,9 +669,13 @@ private fun UnifiedDeck(
                             }
                         }
                         ControlKind.STICK -> Joystick(
-                            size = (padW * 0.32f * sc).coerceIn(96.dp, 168.dp),
+                            size = (padW * 0.30f * sc).coerceIn(92.dp, 152.dp),
                             onStick = onStick,
                             onAction = onAction
+                        )
+                        ControlKind.DPAD -> DPadControl(
+                            size = (padW * 0.236f * sc).coerceIn(80.dp, 118.dp),
+                            onAction = onAction,
                         )
                         ControlKind.TRACKPAD_RS -> MiniTrackpad(
                             widthDp = padW * 0.48f * wSc,
@@ -898,6 +929,201 @@ private fun KeyButton(id: String, label: String, size: Dp, onTap: () -> Unit) {
 }
 
 @Composable
+private fun DPadControl(size: Dp, onAction: (String) -> Unit) {
+    val bridge = ChassisInputBridge.get()
+    val haptics = LocalChassisHaptics.current
+    val onActionState by rememberUpdatedState(onAction)
+    var upOn by remember { mutableStateOf(false) }
+    var downOn by remember { mutableStateOf(false) }
+    var leftOn by remember { mutableStateOf(false) }
+    var rightOn by remember { mutableStateOf(false) }
+
+    val fillIdle = Color(0xFF23232A)
+    val fillPress = Color(0xFF3A3A44)
+    val stroke = Color(0x66FFB300)
+    val chevron = Color(0xFFE8E8ED)
+    val hub = Color(0xFF18181E)
+
+    Box(
+        Modifier
+            .size(size)
+            // Reserve this rect as analog so the deck router cannot steal taps
+            // for nearby digital buttons (LS / face) — fixes cross-tapping.
+            .pressZone(
+                id = "dpad",
+                haptic = PressHaptic.BUTTON,
+                circular = false,
+                analog = true,
+                onPressed = {},
+            )
+            .pointerInput(size) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    down.consume()
+
+                    fun apply(p: Offset) {
+                        val w = this.size.width.toFloat()
+                        val h = this.size.height.toFloat()
+                        val cx = w * 0.5f
+                        val cy = h * 0.5f
+                        val dx = p.x - cx
+                        val dy = p.y - cy
+                        // Segment geometry: 3×3 cell grid with center dead + gaps
+                        val cell = min(w, h) / 3.15f
+                        val gap = cell * 0.12f
+                        val half = cell * 0.5f
+                        val armReach = cell + gap + half
+
+                        // Dominant-axis first (prevents accidental diagonals / double taps)
+                        val absX = kotlin.math.abs(dx)
+                        val absY = kotlin.math.abs(dy)
+                        val inRing = hypot(dx.toDouble(), dy.toDouble()) >= cell * 0.42
+
+                        var u = false
+                        var d = false
+                        var l = false
+                        var r = false
+                        if (inRing) {
+                            val primaryVertical = absY >= absX * 1.12f
+                            val primaryHorizontal = absX >= absY * 1.12f
+                            if (primaryVertical) {
+                                u = dy < -gap && absY <= armReach + half
+                                d = dy > gap && absY <= armReach + half
+                            } else if (primaryHorizontal) {
+                                l = dx < -gap && absX <= armReach + half
+                                r = dx > gap && absX <= armReach + half
+                            } else {
+                                // Clear diagonal only when both axes are strong
+                                u = dy < -gap * 1.4f
+                                d = dy > gap * 1.4f
+                                l = dx < -gap * 1.4f
+                                r = dx > gap * 1.4f
+                            }
+                        }
+
+                        upOn = u
+                        downOn = d
+                        leftOn = l
+                        rightOn = r
+                        bridge.setDpad(u, r, d, l)
+                    }
+
+                    apply(down.position)
+                    haptics?.buttonDown()
+                    onActionState("D-PAD")
+                    try {
+                        drag(down.id) { change ->
+                            apply(change.position)
+                            change.consume()
+                        }
+                    } finally {
+                        bridge.setDpad(false, false, false, false)
+                        upOn = false
+                        downOn = false
+                        leftOn = false
+                        rightOn = false
+                        haptics?.buttonUp()
+                    }
+                }
+            }
+    ) {
+        Canvas(Modifier.fillMaxSize()) {
+            val w = this.size.width
+            val h = this.size.height
+            val cx = w * 0.5f
+            val cy = h * 0.5f
+            val cell = min(w, h) / 3.15f
+            val gap = cell * 0.14f
+            val arm = cell
+            val cr = CornerRadius(cell * 0.34f)
+
+            fun drawArm(
+                left: Float,
+                top: Float,
+                width: Float,
+                height: Float,
+                pressed: Boolean,
+            ) {
+                val brush = Brush.linearGradient(
+                    colors = if (pressed) {
+                        listOf(Color(0xFF4A4A55), fillPress)
+                    } else {
+                        listOf(Color(0xFF2C2C34), fillIdle)
+                    }
+                )
+                drawRoundRect(
+                    brush = brush,
+                    topLeft = Offset(left, top),
+                    size = Size(width, height),
+                    cornerRadius = cr,
+                )
+                drawRoundRect(
+                    color = if (pressed) ControlBorderYellow else stroke,
+                    topLeft = Offset(left, top),
+                    size = Size(width, height),
+                    cornerRadius = cr,
+                    style = Stroke(width = 1.25.dp.toPx()),
+                )
+            }
+
+            // Soft plate behind segments
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(Color(0x2218181E), Color.Transparent),
+                    center = Offset(cx, cy),
+                    radius = min(w, h) * 0.55f,
+                ),
+                radius = min(w, h) * 0.52f,
+                center = Offset(cx, cy),
+            )
+
+            // Up / Down / Left / Right capsules with gaps
+            drawArm(cx - arm / 2, cy - gap - arm - arm / 2, arm, arm, upOn)
+            drawArm(cx - arm / 2, cy + gap + arm / 2, arm, arm, downOn)
+            drawArm(cx - gap - arm - arm / 2, cy - arm / 2, arm, arm, leftOn)
+            drawArm(cx + gap + arm / 2, cy - arm / 2, arm, arm, rightOn)
+
+            // Center hub
+            drawCircle(hub, radius = cell * 0.36f, center = Offset(cx, cy))
+            drawCircle(
+                Color(0x33FFFFFF),
+                radius = cell * 0.36f,
+                center = Offset(cx, cy),
+                style = Stroke(1.dp.toPx()),
+            )
+
+            // Direction chevrons
+            val tip = cell * 0.18f
+            fun chevronUp(ox: Float, oy: Float, on: Boolean) {
+                val c = if (on) ControlBorderYellow else chevron
+                drawLine(c, Offset(ox - tip, oy + tip * 0.35f), Offset(ox, oy - tip * 0.45f), strokeWidth = 2.4.dp.toPx())
+                drawLine(c, Offset(ox + tip, oy + tip * 0.35f), Offset(ox, oy - tip * 0.45f), strokeWidth = 2.4.dp.toPx())
+            }
+            fun chevronDown(ox: Float, oy: Float, on: Boolean) {
+                val c = if (on) ControlBorderYellow else chevron
+                drawLine(c, Offset(ox - tip, oy - tip * 0.35f), Offset(ox, oy + tip * 0.45f), strokeWidth = 2.4.dp.toPx())
+                drawLine(c, Offset(ox + tip, oy - tip * 0.35f), Offset(ox, oy + tip * 0.45f), strokeWidth = 2.4.dp.toPx())
+            }
+            fun chevronLeft(ox: Float, oy: Float, on: Boolean) {
+                val c = if (on) ControlBorderYellow else chevron
+                drawLine(c, Offset(ox + tip * 0.35f, oy - tip), Offset(ox - tip * 0.45f, oy), strokeWidth = 2.4.dp.toPx())
+                drawLine(c, Offset(ox + tip * 0.35f, oy + tip), Offset(ox - tip * 0.45f, oy), strokeWidth = 2.4.dp.toPx())
+            }
+            fun chevronRight(ox: Float, oy: Float, on: Boolean) {
+                val c = if (on) ControlBorderYellow else chevron
+                drawLine(c, Offset(ox - tip * 0.35f, oy - tip), Offset(ox + tip * 0.45f, oy), strokeWidth = 2.4.dp.toPx())
+                drawLine(c, Offset(ox - tip * 0.35f, oy + tip), Offset(ox + tip * 0.45f, oy), strokeWidth = 2.4.dp.toPx())
+            }
+
+            chevronUp(cx, cy - gap - arm, upOn)
+            chevronDown(cx, cy + gap + arm, downOn)
+            chevronLeft(cx - gap - arm, cy, leftOn)
+            chevronRight(cx + gap + arm, cy, rightOn)
+        }
+    }
+}
+
+@Composable
 private fun Joystick(size: Dp, onStick: (Float, Float) -> Unit, onAction: (String) -> Unit) {
     val scope = rememberCoroutineScope()
     var knob by remember { mutableStateOf(Offset.Zero) }
@@ -1088,10 +1314,14 @@ private fun saveLayout(
 ) {
     val defaultsApplied = prefs.getBoolean("defaults_applied_v10", false)
     val faceSeparate = prefs.getBoolean("face_separate_v12", false)
+    val dpadAdded = prefs.getBoolean("dpad_added_v13", false)
+    val dpadLayout = prefs.getBoolean("dpad_layout_v14", false)
     prefs.edit().apply {
         clear()
         if (defaultsApplied) putBoolean("defaults_applied_v10", true)
         if (faceSeparate) putBoolean("face_separate_v12", true)
+        if (dpadAdded) putBoolean("dpad_added_v13", true)
+        if (dpadLayout) putBoolean("dpad_layout_v14", true)
         offsets.forEach { (id, o) -> putString("off_$id", "${o.x},${o.y}") }
         scales.forEach { (id, s) -> putFloat("sz_$id", s) }
         wScales.forEach { (id, s) -> putFloat("ws_$id", s) }
